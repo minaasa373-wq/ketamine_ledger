@@ -91,15 +91,22 @@ body{
 input[type="text"],input[type="date"],input[type="number"],select,textarea{
   width:100%;font-family:var(--font-jp);font-size:16px;color:var(--ink);
   background:#fff;border:1px solid var(--rule);border-radius:2px;
-  padding:9px 11px;min-height:42px;
+  padding:9px 11px;
 }
+input[type="text"],input[type="date"],input[type="number"],select{
+  -webkit-appearance:none;appearance:none;
+  height:44px;min-height:44px;line-height:24px;
+  display:block;text-align:left;
+}
+input[type="date"]{font-family:var(--font-num);font-variant-numeric:tabular-nums}
 input[type="number"]{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+#f-ml{font-family:var(--font-num);font-variant-numeric:tabular-nums;letter-spacing:.06em}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--vial);outline-offset:-1px;border-color:var(--vial)}
 textarea{min-height:50px;resize:vertical;line-height:1.45}
 select{
   appearance:none;
   background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);
-  background-position:calc(100% - 18px) 19px,calc(100% - 13px) 19px;
+  background-position:calc(100% - 18px) 20px,calc(100% - 13px) 20px;
   background-size:5px 5px;background-repeat:no-repeat;padding-right:38px;
 }
 .row{display:flex;gap:10px}
@@ -236,12 +243,12 @@ select{
           </div>
           <div class="field" style="margin:0">
             <label for="f-ml">使用量（mL）<span class="req">必須</span></label>
-            <input type="number" id="f-ml" step="0.01" min="0" inputmode="decimal" placeholder="0.00">
+            <input type="text" id="f-ml" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="035 → 0.35">
           </div>
         </div>
         <div class="ml-out" id="ml-out">
           <span class="n" id="ml-n">0.00</span><span class="u">mL</span>
-          <span class="t" id="ml-t">小数点第2位まで</span>
+          <span class="t" id="ml-t">数字だけ入力（035 → 0.35）</span>
         </div>
       </div>
 
@@ -446,18 +453,33 @@ function todayStr(){
 }
 $("f-date").value = todayStr();
 
-/* ── 使用量 ── */
-$("f-ml").addEventListener("input", updateDose);
-$("f-ml").addEventListener("blur", function(){
-  if($("f-ml").value !== "") $("f-ml").value = round2($("f-ml").value).toFixed(2);
+/* ── 使用量：数字だけ打つと下2桁が小数になる（035 → 0.35）──
+   iOS Safari は入力中に value を書き換えるとカーソルがずれるため、
+   編集中は数字のまま触らず、確定したときだけ整形する。          */
+function mlDigits(){ return $("f-ml").value.replace(/\D/g, "").slice(0, 5); }
+function mlValue(){ const d = mlDigits(); return d ? parseInt(d, 10) / 100 : 0; }
+
+$("f-ml").addEventListener("focus", function(){
+  const d = mlDigits();
+  if($("f-ml").value !== d) $("f-ml").value = d;
+});
+$("f-ml").addEventListener("input", function(){
+  const d = mlDigits();
+  if($("f-ml").value !== d) $("f-ml").value = d;
   updateDose();
 });
+$("f-ml").addEventListener("blur", function(){
+  const d = mlDigits();
+  $("f-ml").value = d ? (parseInt(d, 10) / 100).toFixed(2) : "";
+  updateDose();
+});
+
 function updateDose(){
-  const ml = round2($("f-ml").value);
+  const ml = mlValue();
   $("ml-n").textContent = ml.toFixed(2);
   const over = ml > 10;
   $("ml-out").classList.toggle("over", over);
-  $("ml-t").textContent = over ? "1瓶（10mL）を超えています" : "小数点第2位まで";
+  $("ml-t").textContent = over ? "1瓶（10mL）を超えています" : "数字だけ入力（035 → 0.35）";
 }
 
 /* ── 名前 ── */
@@ -501,7 +523,7 @@ $("btn-save").addEventListener("click", async function(){
   const rec = {
     id: Date.now() + "-" + Math.random().toString(36).slice(2,7),
     date: $("f-date").value,
-    ml: round2($("f-ml").value),
+    ml: mlValue(),
     owner: $("f-owner").value.trim(),
     pet: $("f-pet").value.trim(),
     purpose: $("f-purpose").value.trim(),
