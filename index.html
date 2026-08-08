@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ケタミン施用記録 ｜ ガイア動物病院</title>
+<style>
+:root{
+  --ink:#16262E;
+  --ink-2:#4A616C;
+  --ink-3:#8195A0;
+  --paper:#E7ECEE;
+  --card:#FFFFFF;
+  --rule:#CBD5D9;
+  --rule-2:#E3E9EB;
+  --vial:#0E6A6F;
+  --vial-soft:#DCEDED;
+  --amber:#B8791B;
+  --amber-soft:#FBF0DC;
+  --font-jp:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic Medium",sans-serif;
+  --font-num:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-jp);
+  font-size:16px;line-height:1.5;
+  padding-bottom:24px;
+  -webkit-text-size-adjust:100%;
+}
+
+/* ── ヘッダ ── */
+.masthead{
+  background:var(--ink);color:#fff;
+  padding:10px 20px 9px;
+  padding-top:max(10px,env(safe-area-inset-top));
+}
+.masthead-inner{max-width:1000px;margin:0 auto;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.masthead h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.04em}
+.masthead .clinic{margin:0;font-size:12px;color:#A7BCC4}
+.masthead .prep{
+  margin-left:auto;font-size:12px;color:#8FB8BA;
+  font-family:var(--font-num);letter-spacing:.04em;
+}
+
+/* ── タブ ── */
+.tabs{background:var(--card);border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:20}
+.tabs-inner{max-width:1000px;margin:0 auto;display:flex}
+.tab{
+  flex:1;appearance:none;background:none;border:none;
+  font-family:var(--font-jp);font-size:15px;font-weight:600;color:var(--ink-3);
+  padding:11px 4px 9px;border-bottom:3px solid transparent;cursor:pointer;
+}
+.tab[aria-selected="true"]{color:var(--vial);border-bottom-color:var(--vial)}
+
+.wrap{max-width:1000px;margin:0 auto;padding:14px 14px 0}
+.panel[hidden]{display:none}
+
+/* ── カード ── */
+.card{
+  background:var(--card);border:1px solid var(--rule);border-radius:3px;
+  padding:13px 15px;margin-bottom:12px;
+}
+.card:last-child{margin-bottom:0}
+.card-label{
+  font-family:var(--font-num);font-size:10px;letter-spacing:.18em;color:var(--ink-3);
+  margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--rule-2);
+}
+
+/* ── 入力レイアウト ── */
+.input-grid{display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
+.col > .card{margin-bottom:12px}
+@media (min-width:760px){
+  .input-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px}
+}
+
+/* ── フォーム部品 ── */
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field > label,.legend{
+  display:block;font-size:12px;font-weight:700;letter-spacing:.04em;
+  color:var(--ink-2);margin-bottom:4px;
+}
+.req{color:var(--vial);font-family:var(--font-num);font-size:10px;margin-left:5px}
+.opt{color:var(--ink-3);font-weight:400;font-size:10px;margin-left:5px}
+.hint{font-size:11px;color:var(--ink-3);margin:5px 0 0;line-height:1.45}
+
+input[type="text"],input[type="date"],input[type="number"],select,textarea{
+  width:100%;font-family:var(--font-jp);font-size:16px;color:var(--ink);
+  background:#fff;border:1px solid var(--rule);border-radius:2px;
+  padding:9px 11px;min-height:42px;
+}
+input[type="number"]{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--vial);outline-offset:-1px;border-color:var(--vial)}
+textarea{min-height:50px;resize:vertical;line-height:1.45}
+select{
+  appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 19px,calc(100% - 13px) 19px;
+  background-size:5px 5px;background-repeat:no-repeat;padding-right:38px;
+}
+.row{display:flex;gap:10px}
+.row > *{flex:1;min-width:0}
+
+/* ── 使用量の確認表示 ── */
+.ml-out{
+  display:flex;align-items:baseline;gap:7px;
+  background:var(--vial-soft);border-left:3px solid var(--vial);
+  padding:7px 12px;margin-top:8px;
+}
+.ml-out .n{
+  font-family:var(--font-num);font-size:24px;font-weight:600;color:var(--vial);
+  font-variant-numeric:tabular-nums;line-height:1.15;
+}
+.ml-out .u{font-family:var(--font-num);font-size:12px;color:var(--vial)}
+.ml-out .t{margin-left:auto;font-size:11px;color:var(--ink-2)}
+.ml-out.over{background:var(--amber-soft);border-left-color:var(--amber)}
+.ml-out.over .n,.ml-out.over .u{color:var(--amber)}
+
+/* ── 名前プレビュー ── */
+.name-preview{
+  margin-top:8px;padding:7px 12px;border:1px dashed var(--rule);
+  font-size:11px;color:var(--ink-3);display:flex;align-items:baseline;gap:9px;
+}
+.name-preview b{font-size:18px;font-weight:700;color:var(--ink);letter-spacing:.06em}
+
+/* ── 目的チップ ── */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  appearance:none;font-family:var(--font-jp);font-size:13px;line-height:1.3;
+  background:#fff;color:var(--ink-2);
+  border:1px solid var(--rule);border-radius:100px;
+  padding:7px 13px;cursor:pointer;
+}
+.chip[aria-pressed="true"]{background:var(--vial);border-color:var(--vial);color:#fff;font-weight:600}
+.chip-group{margin-bottom:8px}
+.chip-group:last-of-type{margin-bottom:0}
+.chip-group-name{
+  font-family:var(--font-num);font-size:9px;letter-spacing:.16em;
+  color:var(--ink-3);margin:0 0 5px;
+}
+
+/* ── ボタン ── */
+.btn{
+  appearance:none;font-family:var(--font-jp);font-size:16px;font-weight:700;letter-spacing:.06em;
+  background:var(--vial);color:#fff;border:1px solid var(--vial);border-radius:2px;
+  padding:13px 20px;width:100%;cursor:pointer;
+}
+.btn:active{opacity:.85}
+.btn-ghost{background:#fff;color:var(--ink-2);border-color:var(--rule);font-weight:600;font-size:14px;padding:9px 14px;width:auto}
+.btn-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}
+
+/* ── トースト ── */
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translate(-50%,90px);
+  background:var(--ink);color:#fff;font-size:14px;font-weight:600;
+  padding:12px 20px;border-radius:3px;
+  transition:transform .28s cubic-bezier(.2,.9,.3,1);z-index:60;max-width:calc(100% - 32px);
+}
+.toast.show{transform:translate(-50%,0)}
+
+/* ── 記録一覧 ── */
+.rec{
+  background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--vial);
+  border-radius:2px;padding:11px 14px;margin-bottom:8px;
+}
+.rec-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.rec-date{font-family:var(--font-num);font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.rec-name{font-size:17px;font-weight:700;letter-spacing:.04em}
+.rec-ml{margin-left:auto;font-family:var(--font-num);font-size:17px;font-weight:600;color:var(--vial);font-variant-numeric:tabular-nums}
+.rec-meta{font-size:12px;color:var(--ink-3);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap}
+.rec-del{appearance:none;background:none;border:none;font-family:var(--font-jp);font-size:12px;color:var(--ink-3);padding:3px 0 0;cursor:pointer;text-decoration:underline}
+.empty{border:1px dashed var(--rule);border-radius:3px;padding:34px 20px;text-align:center;color:var(--ink-3);font-size:14px;background:rgba(255,255,255,.5)}
+
+/* ── 集計 ── */
+.total{background:var(--ink);color:#fff;border-radius:3px;padding:18px 20px;margin-bottom:12px}
+.total .lbl{font-family:var(--font-num);font-size:10px;letter-spacing:.18em;color:#8FB8BA;margin:0}
+.total .n{font-family:var(--font-num);font-size:40px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.15;margin:4px 0 0}
+.total .n span{font-size:16px;font-weight:400;margin-left:6px;color:#A7BCC4}
+.total .sub{font-size:12px;color:#A7BCC4;margin:5px 0 0}
+
+.bar-row{padding:9px 0;border-bottom:1px solid var(--rule-2)}
+.bar-row:last-child{border-bottom:none}
+.bar-head{display:flex;align-items:baseline;gap:10px;margin-bottom:5px}
+.bar-key{font-size:13px;color:var(--ink-2);min-width:0}
+.bar-count{
+  margin-left:auto;font-family:var(--font-num);font-size:12px;
+  font-variant-numeric:tabular-nums;color:var(--ink-3);white-space:nowrap;
+}
+.bar-val{
+  font-family:var(--font-num);font-size:14px;font-weight:600;
+  font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap;
+  min-width:74px;text-align:right;
+}
+.bar-track{height:8px;background:var(--rule-2);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;background:var(--vial)}
+.bar-row.zero .bar-key,.bar-row.zero .bar-val,.bar-row.zero .bar-count{color:var(--ink-3);font-weight:400}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <h1>ケタミン施用記録</h1>
+    <p class="clinic">ガイア動物病院</p>
+    <p class="prep">ケタミン注5％「フジタ」</p>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tabs-inner" role="tablist">
+    <button class="tab" role="tab" aria-selected="true"  data-panel="p-input">入力</button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="p-list">記録一覧</button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="p-sum">集計</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ══ 入力 ══ -->
+<section class="panel" id="p-input" role="tabpanel">
+  <div class="input-grid">
+
+    <div class="col">
+      <div class="card">
+        <p class="card-label">01 ／ 施用日と使用量</p>
+        <div class="row">
+          <div class="field" style="margin:0">
+            <label for="f-date">日付<span class="req">必須</span></label>
+            <input type="date" id="f-date">
+          </div>
+          <div class="field" style="margin:0">
+            <label for="f-ml">使用量（mL）<span class="req">必須</span></label>
+            <input type="number" id="f-ml" step="0.01" min="0" inputmode="decimal" placeholder="0.00">
+          </div>
+        </div>
+        <div class="ml-out" id="ml-out">
+          <span class="n" id="ml-n">0.00</span><span class="u">mL</span>
+          <span class="t" id="ml-t">小数点第2位まで</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card-label">02 ／ 患畜</p>
+        <div class="row">
+          <div class="field" style="margin:0">
+            <label for="f-owner">飼い主の名字<span class="req">必須</span></label>
+            <input type="text" id="f-owner" list="dl-owner" placeholder="田中" autocomplete="off">
+            <datalist id="dl-owner"></datalist>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="f-pet">ペットの名前<span class="req">必須</span></label>
+            <input type="text" id="f-pet" list="dl-pet" placeholder="ゲンタ" autocomplete="off">
+            <datalist id="dl-pet"></datalist>
+          </div>
+        </div>
+        <div class="name-preview">帳簿の記載名<b id="name-prev">—</b></div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card">
+        <p class="card-label">03 ／ 施用目的（ひとつ選ぶ）</p>
+        <div id="chips">
+          <div class="chip-group">
+            <p class="chip-group-name">SEDATION</p>
+            <div class="chips">
+              <button type="button" class="chip" aria-pressed="false">鎮静（処置）</button>
+              <button type="button" class="chip" aria-pressed="false">鎮静（検査）</button>
+              <button type="button" class="chip" aria-pressed="false">鎮静（トリミング）</button>
+            </div>
+          </div>
+          <div class="chip-group">
+            <p class="chip-group-name">SPAY</p>
+            <div class="chips">
+              <button type="button" class="chip" aria-pressed="false">避妊手術（犬）</button>
+              <button type="button" class="chip" aria-pressed="false">避妊手術（猫）</button>
+              <button type="button" class="chip" aria-pressed="false">避妊手術（ウサギ）</button>
+            </div>
+          </div>
+          <div class="chip-group">
+            <p class="chip-group-name">NEUTER</p>
+            <div class="chips">
+              <button type="button" class="chip" aria-pressed="false">去勢手術（犬）</button>
+              <button type="button" class="chip" aria-pressed="false">去勢手術（猫）</button>
+              <button type="button" class="chip" aria-pressed="false">去勢手術（ウサギ）</button>
+            </div>
+          </div>
+          <div class="chip-group">
+            <p class="chip-group-name">PROCEDURE</p>
+            <div class="chips">
+              <button type="button" class="chip" aria-pressed="false">歯科処置</button>
+              <button type="button" class="chip" aria-pressed="false">泌尿器科処置</button>
+              <button type="button" class="chip" aria-pressed="false">消化器科処置</button>
+              <button type="button" class="chip" aria-pressed="false">眼科処置</button>
+              <button type="button" class="chip" aria-pressed="false">皮膚処置</button>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="f-purpose">
+
+        <div class="field" style="margin-top:11px">
+          <label for="f-note">備考<span class="opt">任意・集計対象外</span></label>
+          <textarea id="f-note" placeholder="術式や特記事項があれば"></textarea>
+        </div>
+      </div>
+
+      <button class="btn" id="btn-save">この内容で記録する</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══ 記録一覧 ══ -->
+<section class="panel" id="p-list" role="tabpanel" hidden>
+  <div class="card">
+    <div class="field" style="margin:0">
+      <label for="f-search">名前で絞り込む</label>
+      <input type="text" id="f-search" placeholder="田中 / ゲンタ" autocomplete="off">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" id="btn-csv">CSVを書き出す</button>
+      <button class="btn btn-ghost" id="btn-import">CSVを読み込む</button>
+      <input type="file" id="f-file" accept=".csv,text/csv" hidden>
+    </div>
+  </div>
+  <div id="list"></div>
+</section>
+
+<!-- ══ 集計 ══ -->
+<section class="panel" id="p-sum" role="tabpanel" hidden>
+  <div class="card" style="margin-bottom:12px">
+    <div class="field" style="margin:0">
+      <label for="f-month">対象期間</label>
+      <select id="f-month"></select>
+    </div>
+  </div>
+
+  <div class="total">
+    <p class="lbl">TOTAL ADMINISTERED / mL</p>
+    <p class="n" id="sum-ml">0.00<span>mL</span></p>
+    <p class="sub" id="sum-sub">記録 0 件</p>
+  </div>
+
+  <div class="card">
+    <p class="card-label">目的別の使用量</p>
+    <div id="by-purpose"></div>
+  </div>
+</section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ═══ 保存先 ═══════════════════════════════════
+   GAS_URL に Google Apps Script のURLを入れると、
+   ワクチン接種証明書と同じくスプレッドシートへ保存できます。
+   空のままなら、この端末の中だけに保存します。      */
+const GAS_URL = "";
+const KEY = "gaia_ketamine_v1";
+const PREP_NAME = "ケタミン注5％「フジタ」";
+
+/* 施用目的（集計軸・表示順）*/
+const PURPOSES = [
+  "鎮静（処置）","鎮静（検査）","鎮静（トリミング）",
+  "避妊手術（犬）","避妊手術（猫）","避妊手術（ウサギ）",
+  "去勢手術（犬）","去勢手術（猫）","去勢手術（ウサギ）",
+  "歯科処置","泌尿器科処置","消化器科処置","眼科処置","皮膚処置"
+];
+
+const store = {
+  async load(){
+    if(GAS_URL){
+      try{ const r = await fetch(GAS_URL + "?action=list"); return await r.json(); }
+      catch(e){ console.error(e); }
+    }
+    if(window.storage){
+      try{ const r = await window.storage.get(KEY); return r && r.value ? JSON.parse(r.value) : []; }
+      catch(e){ return []; }
+    }
+    try{ return JSON.parse(window.localStorage.getItem(KEY) || "[]"); }
+    catch(e){ return []; }
+  },
+  async save(list){
+    const json = JSON.stringify(list);
+    if(GAS_URL){
+      try{
+        await fetch(GAS_URL, {method:"POST", body:json,
+          headers:{"Content-Type":"text/plain;charset=utf-8"}});
+      }catch(e){ console.error(e); }
+    }
+    if(window.storage){
+      try{ await window.storage.set(KEY, json); return; }catch(e){}
+    }
+    try{ window.localStorage.setItem(KEY, json); }catch(e){}
+  }
+};
+
+let records = [];
+const $ = function(id){ return document.getElementById(id); };
+function round2(v){ return Math.round((parseFloat(v) || 0) * 100) / 100; }
+function esc(s){
+  return String(s).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
+  });
+}
+
+/* ── タブ ── */
+document.querySelectorAll(".tab").forEach(function(t){
+  t.addEventListener("click", function(){
+    document.querySelectorAll(".tab").forEach(function(x){ x.setAttribute("aria-selected","false"); });
+    document.querySelectorAll(".panel").forEach(function(p){ p.hidden = true; });
+    t.setAttribute("aria-selected","true");
+    $(t.dataset.panel).hidden = false;
+    if(t.dataset.panel === "p-list") renderList();
+    if(t.dataset.panel === "p-sum")  renderSum();
+    window.scrollTo(0,0);
+  });
+});
+
+/* ── トースト ── */
+let toastTimer;
+function toast(msg){
+  const el = $("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove("show"); }, 2600);
+}
+
+/* ── 日付 ── */
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,"0") + "-" +
+    String(d.getDate()).padStart(2,"0");
+}
+$("f-date").value = todayStr();
+
+/* ── 使用量 ── */
+$("f-ml").addEventListener("input", updateDose);
+$("f-ml").addEventListener("blur", function(){
+  if($("f-ml").value !== "") $("f-ml").value = round2($("f-ml").value).toFixed(2);
+  updateDose();
+});
+function updateDose(){
+  const ml = round2($("f-ml").value);
+  $("ml-n").textContent = ml.toFixed(2);
+  const over = ml > 10;
+  $("ml-out").classList.toggle("over", over);
+  $("ml-t").textContent = over ? "1瓶（10mL）を超えています" : "小数点第2位まで";
+}
+
+/* ── 名前 ── */
+function updateName(){
+  const o = $("f-owner").value.trim();
+  const p = $("f-pet").value.trim();
+  $("name-prev").textContent = (o || p) ? (o + p) : "—";
+}
+$("f-owner").addEventListener("input", updateName);
+$("f-pet").addEventListener("input", updateName);
+
+/* ── 目的（単一選択）── */
+$("chips").addEventListener("click", function(e){
+  const chip = e.target.closest(".chip");
+  if(!chip) return;
+  const on = chip.getAttribute("aria-pressed") === "true";
+  $("chips").querySelectorAll(".chip").forEach(function(c){
+    c.setAttribute("aria-pressed","false");
+  });
+  chip.setAttribute("aria-pressed", on ? "false" : "true");
+  $("f-purpose").value = on ? "" : chip.textContent;
+});
+
+/* ── 候補リスト ── */
+function refreshDatalists(){
+  const fill = function(id, key){
+    const seen = [];
+    records.forEach(function(r){
+      if(r[key] && seen.indexOf(r[key]) === -1) seen.push(r[key]);
+    });
+    $(id).innerHTML = seen.slice(0,80).map(function(v){
+      return '<option value="' + esc(v) + '">';
+    }).join("");
+  };
+  fill("dl-owner","owner");
+  fill("dl-pet","pet");
+}
+
+/* ── 保存 ── */
+$("btn-save").addEventListener("click", async function(){
+  const rec = {
+    id: Date.now() + "-" + Math.random().toString(36).slice(2,7),
+    date: $("f-date").value,
+    ml: round2($("f-ml").value),
+    owner: $("f-owner").value.trim(),
+    pet: $("f-pet").value.trim(),
+    purpose: $("f-purpose").value.trim(),
+    note: $("f-note").value.trim(),
+    recordedAt: new Date().toISOString()
+  };
+
+  if(!rec.date)              return toast("日付を入れてください");
+  if(!(rec.ml > 0))          return toast("使用量を入れてください");
+  if(!rec.owner || !rec.pet) return toast("飼い主の名字とペットの名前を入れてください");
+  if(!rec.purpose)           return toast("施用目的を選んでください");
+
+  records.unshift(rec);
+  await store.save(records);
+  refreshDatalists();
+
+  $("f-ml").value = "";
+  $("f-owner").value = "";
+  $("f-pet").value = "";
+  $("f-purpose").value = "";
+  $("f-note").value = "";
+  $("chips").querySelectorAll(".chip").forEach(function(c){
+    c.setAttribute("aria-pressed","false");
+  });
+  updateDose(); updateName();
+  toast(rec.owner + rec.pet + " の記録を保存しました（" + rec.ml.toFixed(2) + "mL）");
+});
+
+/* ── 一覧 ── */
+$("f-search").addEventListener("input", renderList);
+
+function renderList(){
+  const q = $("f-search").value.trim();
+  const rows = records.filter(function(r){
+    return !q || (r.owner + r.pet).indexOf(q) !== -1;
+  }).slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+
+  if(!rows.length){
+    $("list").innerHTML = '<div class="empty">' +
+      (q ? "該当する記録がありません。" : "まだ記録がありません。「入力」から登録してください。") + "</div>";
+    return;
+  }
+
+  $("list").innerHTML = rows.map(function(r){
+    const meta = [];
+    if(r.purpose) meta.push(esc(r.purpose));
+    if(r.note)    meta.push(esc(r.note));
+    if(!meta.length) meta.push("—");
+    return '<div class="rec">' +
+      '<div class="rec-top">' +
+        '<span class="rec-date">' + esc(r.date) + "</span>" +
+        '<span class="rec-name">' + esc(r.owner + r.pet) + "</span>" +
+        '<span class="rec-ml">' + round2(r.ml).toFixed(2) + " mL</span>" +
+      "</div>" +
+      '<div class="rec-meta"><span>' + meta.join("</span><span>") + "</span></div>" +
+      '<button class="rec-del" data-id="' + r.id + '">この記録を削除</button>' +
+    "</div>";
+  }).join("");
+}
+
+$("list").addEventListener("click", async function(e){
+  const b = e.target.closest(".rec-del");
+  if(!b) return;
+  const r = records.find(function(x){ return x.id === b.dataset.id; });
+  if(!r) return;
+  if(!confirm(r.date + "　" + r.owner + r.pet + "（" + round2(r.ml).toFixed(2) + "mL）を削除します。\n帳簿の記録です。よろしいですか？")) return;
+  records = records.filter(function(x){ return x.id !== b.dataset.id; });
+  await store.save(records);
+  renderList(); refreshDatalists();
+  toast("削除しました");
+});
+
+/* ── CSV ── */
+const CSV_HEAD = ["日付","飼い主","ペット名","記載名","製剤","使用量mL","目的","備考","記録日時"];
+
+$("btn-csv").addEventListener("click", function(){
+  if(!records.length) return toast("書き出す記録がありません");
+  const q = function(v){ return '"' + String(v == null ? "" : v).replace(/"/g,'""') + '"'; };
+  const lines = [CSV_HEAD.map(q).join(",")];
+  records.slice().sort(function(a,b){ return a.date < b.date ? -1 : 1; }).forEach(function(r){
+    lines.push([r.date,r.owner,r.pet,r.owner+r.pet,PREP_NAME,
+      round2(r.ml).toFixed(2),r.purpose,r.note,r.recordedAt].map(q).join(","));
+  });
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "ketamine_" + todayStr().replace(/-/g,"") + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+  toast("CSVを書き出しました");
+});
+
+$("btn-import").addEventListener("click", function(){ $("f-file").click(); });
+$("f-file").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(){
+    const rows = parseCsv(String(reader.result).replace(/^\uFEFF/,""));
+    if(rows.length < 2) return toast("読み込める行がありませんでした");
+    let added = 0;
+    rows.slice(1).forEach(function(c){
+      if(!c[0]) return;
+      const rec = {
+        id: "imp-" + Math.random().toString(36).slice(2,9),
+        date:c[0], owner:c[1]||"", pet:c[2]||"",
+        ml:round2(c[5]), purpose:c[6]||"", note:c[7]||"",
+        recordedAt:c[8]||new Date().toISOString()
+      };
+      const dup = records.some(function(r){
+        return r.date===rec.date && r.owner===rec.owner && r.pet===rec.pet && r.ml===rec.ml;
+      });
+      if(!dup){ records.push(rec); added++; }
+    });
+    await store.save(records);
+    renderList(); refreshDatalists(); buildMonths();
+    toast(added + " 件を読み込みました");
+    e.target.value = "";
+  };
+  reader.readAsText(file);
+});
+
+function parseCsv(text){
+  const rows = []; let row = [], cell = "", inQ = false;
+  for(let i=0; i<text.length; i++){
+    const ch = text[i];
+    if(inQ){
+      if(ch === '"'){ if(text[i+1] === '"'){ cell += '"'; i++; } else inQ = false; }
+      else cell += ch;
+    } else if(ch === '"') inQ = true;
+    else if(ch === ","){ row.push(cell); cell = ""; }
+    else if(ch === "\n"){ row.push(cell); rows.push(row); row = []; cell = ""; }
+    else if(ch !== "\r") cell += ch;
+  }
+  if(cell || row.length){ row.push(cell); rows.push(row); }
+  return rows;
+}
+
+/* ── 集計 ── */
+function buildMonths(){
+  const months = [];
+  records.forEach(function(r){
+    const m = (r.date || "").slice(0,7);
+    if(m && months.indexOf(m) === -1) months.push(m);
+  });
+  months.sort().reverse();
+  const cur = $("f-month").value;
+  $("f-month").innerHTML = '<option value="all">すべての期間</option>' +
+    months.map(function(m){
+      return '<option value="' + m + '">' + m.slice(0,4) + "年" + Number(m.slice(5,7)) + "月</option>";
+    }).join("");
+  if(cur) $("f-month").value = cur;
+}
+$("f-month").addEventListener("change", renderSum);
+
+function renderSum(){
+  buildMonths();
+  const m = $("f-month").value || "all";
+  const rows = records.filter(function(r){
+    return m === "all" || (r.date || "").slice(0,7) === m;
+  });
+
+  const totalMl = rows.reduce(function(s,r){ return s + (r.ml || 0); }, 0);
+  $("sum-ml").innerHTML = round2(totalMl).toFixed(2) + "<span>mL</span>";
+  $("sum-sub").textContent = "記録 " + rows.length + " 件";
+
+  /* 目的別：14分類を常に全部並べる（使用ゼロも表示）*/
+  const ml = {}, ct = {};
+  PURPOSES.forEach(function(k){ ml[k] = 0; ct[k] = 0; });
+  rows.forEach(function(r){
+    const k = (r.purpose || "").trim() || "目的が未記入";
+    ml[k] = (ml[k] || 0) + (r.ml || 0);
+    ct[k] = (ct[k] || 0) + 1;
+  });
+  const list = Object.keys(ml).map(function(k){ return [k, ml[k], ct[k]]; })
+    .sort(function(a,b){ return b[1] - a[1]; });
+  const max = list.length ? (list[0][1] || 1) : 1;
+
+  $("by-purpose").innerHTML = list.map(function(p){
+    return '<div class="bar-row' + (p[1] ? "" : " zero") + '">' +
+      '<div class="bar-head">' +
+        '<span class="bar-key">' + esc(p[0]) + "</span>" +
+        '<span class="bar-count">' + p[2] + " 件</span>" +
+        '<span class="bar-val">' + round2(p[1]).toFixed(2) + " mL</span>" +
+      "</div>" +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + (p[1]/max*100) + '%"></div></div>' +
+    "</div>";
+  }).join("");
+}
+
+/* ── 起動 ── */
+(async function init(){
+  records = await store.load();
+  if(!Array.isArray(records)) records = [];
+  refreshDatalists();
+  buildMonths();
+  updateDose();
+  updateName();
+})();
+
+})();
+</script>
+</body>
+</html>
