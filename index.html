@@ -185,12 +185,12 @@ select{background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),
           </div>
           <div class="field" style="margin:0">
             <label for="f-ml">使用量（mL）<span class="req">必須</span></label>
-            <input type="text" id="f-ml" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="035 → 0.35">
+            <input type="text" id="f-ml" inputmode="decimal" autocomplete="off" placeholder="02 → 0.20">
           </div>
         </div>
         <div class="ml-out" id="ml-out">
           <span class="n" id="ml-n">0.00</span><span class="u">mL</span>
-          <span class="t" id="ml-t">数字だけ入力（035 → 0.35）</span>
+          <span class="t" id="ml-t">02 → 0.20 ／ 035 → 0.35</span>
         </div>
       </div>
 
@@ -310,7 +310,7 @@ select{background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),
 /* ═══════════════════════════════════════════════════
    設定：Apps Script のウェブアプリURL（/exec で終わるもの）
    ═══════════════════════════════════════════════════ */
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzrpGWpypDtcgu5HOHpva0RNqei-W_sedWwAz6WNhn8lSOVz_qR0oAPOzewn4OqbJ0p/exec";
+const GAS_URL = "";
 
 /* 認証を足すときの場所。空のうちは無効。
    使うときは、GAS側の API_TOKEN にも同じ文字列を入れてください。 */
@@ -481,27 +481,57 @@ function todayStr(){
 }
 $("f-date").value = todayStr();
 
-/* ── 使用量：数字だけ打つと下2桁が小数になる（035 → 0.35）── */
-function mlDigits(){ return $("f-ml").value.replace(/\D/g, "").slice(0, 5); }
-function mlValue(){ const d = mlDigits(); return d ? parseInt(d, 10) / 100 : 0; }
+/* ── 使用量 ────────────────────────────────────
+   数字だけ打つと、先頭1桁が整数部・残りが小数部になる。
+     02  → 0.20      035 → 0.35
+     005 → 0.05      125 → 1.25
+   10mL以上など数字だけで表せない値は、ピリオドを打てば
+   そのまま小数として解釈する（10.5 など）。            */
+
+function mlText(){
+  /* 数字とピリオドだけ残し、ピリオドは最初の1つに限る */
+  let s = String($("f-ml").value).replace(/[^0-9.]/g, "");
+  const i = s.indexOf(".");
+  if(i !== -1) s = s.slice(0, i + 1) + s.slice(i + 1).replace(/\./g, "");
+  return s.slice(0, 6);
+}
+
+function mlValue(){
+  const s = mlText();
+  if(!s) return 0;
+  if(s.indexOf(".") !== -1) return round2(parseFloat(s) || 0);   /* ピリオド入力 */
+  const intPart = s.slice(0, 1);
+  const decPart = s.slice(1, 3);
+  return round2(parseFloat(intPart + "." + (decPart || "0")) || 0);
+}
+
+/* 0.20 → "020" のように、同じ値を再現できる数字列へ戻す */
+function mlToDigits(ml){
+  if(!(ml > 0) || ml >= 10) return null;
+  return ml.toFixed(2).replace(".", "");
+}
+
 $("f-ml").addEventListener("focus", function(){
-  const d = mlDigits(); if($("f-ml").value !== d) $("f-ml").value = d;
+  const d = mlToDigits(mlValue());
+  if(d !== null && $("f-ml").value !== d) $("f-ml").value = d;
 });
 $("f-ml").addEventListener("input", function(){
-  const d = mlDigits(); if($("f-ml").value !== d) $("f-ml").value = d;
+  const s = mlText();
+  if($("f-ml").value !== s) $("f-ml").value = s;
   updateDose();
 });
 $("f-ml").addEventListener("blur", function(){
-  const d = mlDigits();
-  $("f-ml").value = d ? (parseInt(d,10)/100).toFixed(2) : "";
+  const ml = mlValue();
+  $("f-ml").value = ml > 0 ? ml.toFixed(2) : "";
   updateDose();
 });
+
 function updateDose(){
   const ml = mlValue();
   $("ml-n").textContent = ml.toFixed(2);
   const over = ml > 10;
   $("ml-out").classList.toggle("over", over);
-  $("ml-t").textContent = over ? "1瓶（10mL）を超えています" : "数字だけ入力（035 → 0.35）";
+  $("ml-t").textContent = over ? "1瓶（10mL）を超えています" : "02 → 0.20 ／ 035 → 0.35";
 }
 
 function updateName(){
